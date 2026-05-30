@@ -2,7 +2,8 @@
   "name": "CCNA Study",
   "short_name": "CCNA",
   "description": "CCNA 考題與單字練習",
-  "start_url": "/",
+  "start_url": "/ccna-study/",
+  "scope": "/ccna-study/",
   "display": "standalone",
   "background_color": "#0f1115",
   "theme_color": "#0f1115",
@@ -27,20 +28,17 @@
     {
       "name": "單字練習",
       "short_name": "單字",
-      "url": "/?tab=vocab",
-      "description": "開始單字練習"
+      "url": "/ccna-study/?tab=vocab"
     },
     {
       "name": "題庫練習",
       "short_name": "題庫",
-      "url": "/?tab=mcq",
-      "description": "開始題庫練習"
+      "url": "/ccna-study/?tab=mcq"
     },
     {
       "name": "弱點複習",
       "short_name": "弱點",
-      "url": "/?tab=weak",
-      "description": "複習弱點題目"
+      "url": "/ccna-study/?tab=weak"
     }
   ]
 }
