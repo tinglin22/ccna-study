@@ -1,0 +1,46 @@
+{
+  "name": "CCNA Study",
+  "short_name": "CCNA",
+  "description": "CCNA 考題與單字練習",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1115",
+  "theme_color": "#0f1115",
+  "orientation": "portrait",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%230f1115'/><circle cx='96' cy='96' r='60' fill='none' stroke='%237c4dff' stroke-width='8'/><circle cx='96' cy='96' r='30' fill='%237c4dff'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%230f1115'/><circle cx='256' cy='256' r='160' fill='none' stroke='%237c4dff' stroke-width='20'/><circle cx='256' cy='256' r='80' fill='%237c4dff'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "utilities"],
+  "shortcuts": [
+    {
+      "name": "單字練習",
+      "short_name": "單字",
+      "url": "/?tab=vocab",
+      "description": "開始單字練習"
+    },
+    {
+      "name": "題庫練習",
+      "short_name": "題庫",
+      "url": "/?tab=mcq",
+      "description": "開始題庫練習"
+    },
+    {
+      "name": "弱點複習",
+      "short_name": "弱點",
+      "url": "/?tab=weak",
+      "description": "複習弱點題目"
+    }
+  ]
+}
