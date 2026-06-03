@@ -1334,8 +1334,14 @@ function vShowResult(){
   document.getElementById('v-retake-sess-btn').disabled=vSessWrong.length===0;
   // 若是弱點模式且還有更多單字沒練
   const weakBtn = document.getElementById('v-retake-weak-btn');
-  if(vWeakPool.length>20){ weakBtn.style.display='flex'; weakBtn.textContent='繼續弱點練習（還剩 '+(vWeakPool.length-vSessionWords.length)+' 題）'; }
-  else weakBtn.style.display='none';
+  const vRemaining = vWeakPool.filter(w=>!vWeakDone.has(w.id)).length;
+  if(vWeakPool.length>0 && vRemaining>0){
+    weakBtn.style.display='flex';
+    weakBtn.textContent='繼續弱點練習（還剩 '+vRemaining+' 題）';
+  } else if(vWeakPool.length>0 && vRemaining===0){
+    weakBtn.style.display='flex';
+    weakBtn.textContent='🔄 重新練習全部弱點（'+vWeakPool.length+' 題）';
+  } else weakBtn.style.display='none';
   vShowScreen('v-s-result');
 }
 function vRestartSame(){if(!vLastSetup)return vGoHome();selCats=new Set(vLastSetup.cats);dir=vLastSetup.dir;hintOn=vLastSetup.hintOn;vStartQuiz();}
@@ -1605,8 +1611,14 @@ function mShowResult(){
   setTimeout(()=>{document.getElementById('m-ring-arc').style.strokeDashoffset=339*(1-pct/100);},80);
   document.getElementById('m-retake-sess-btn').disabled=mSessWrong.length===0;
   const mWeakBtn = document.getElementById('m-retake-weak-btn');
-  if(mWeakPool.length>mSessionQs.length){ mWeakBtn.style.display='flex'; }
-  else mWeakBtn.style.display='none';
+  const mRemaining = mWeakPool.filter(q=>!mWeakDone.has(q.id)).length;
+  if(mWeakPool.length>0 && mRemaining>0){
+    mWeakBtn.style.display='flex';
+    mWeakBtn.textContent='繼續弱點練習（還剩 '+mRemaining+' 題）';
+  } else if(mWeakPool.length>0 && mRemaining===0){
+    mWeakBtn.style.display='flex';
+    mWeakBtn.textContent='🔄 重新練習全部弱點（'+mWeakPool.length+' 題）';
+  } else mWeakBtn.style.display='none';
   const radarSec=document.getElementById('m-radar-section');
   if(mSessionQs.filter(q=>q.category).length>=3){radarSec.style.display='block';const rd=buildRadarData(mSessionQs,mSessWrong);setTimeout(()=>drawRadar('m-radar-canvas',rd.labels,rd.data,'m-cat-stat-list'),200);}
   else radarSec.style.display='none';
@@ -1951,6 +1963,17 @@ function cTimedShowTIPS(){const q=cTimedPool[cTimedIdx];if(!q||!q.tips)return;do
 //  VOCAB UNDERLINE SYSTEM
 // ════════════════════════════════════════
 // 在文字中標記 vocabulary 單字，加底線提示
+
+// 判斷 vocab 單字是否需要顯示底線提示
+function vocabNeedsHint(vocabId){
+  if(!vocabId) return true; // 沒有 id 就顯示（保險）
+  const prog = PROGRESS_CACHE['vocab:'+vocabId];
+  if(!prog) return true; // 未練習 → 顯示
+  if(prog.status === 'needs_work') return true; // 需加強 → 顯示
+  if((prog.wrong_count||0) >= 1) return true;   // 有錯誤 → 顯示
+  if(prog.status === 'practiced' && (prog.wrong_count||0) === 0) return false; // 已熟 → 不顯示
+  return true; // 其他情況顯示
+}
 function renderTextWithVocabHints(container, rawText){
   container.innerHTML='';
   if(!rawText) return;
@@ -1974,6 +1997,8 @@ function renderTextWithVocabHints(container, rawText){
           const key=match.toLowerCase().trim();
           const info=VOCAB_ID_MAP[key];
           if(!info) return match;
+          // 只有還不熟的單字才加底線
+          if(!vocabNeedsHint(info.id)) return match;
           return `<span class="vocab-hint" data-eng="${match}" data-zh="${info.chinese||''}" data-desc="${(info.description||'').replace(/"/g,'&quot;')}">${match}</span>`;
         });
       span.innerHTML=html;
@@ -2252,15 +2277,14 @@ function wStartVocab(filterType, minWrong){
 
   if(!pool.length){ alert('沒有符合條件的單字！'); return; }
 
-  // 設定好後直接跳到單字練習的 quiz 畫面
   switchMode('vocab');
-  // 用弱點 pool 覆蓋 session
-  vSessionWords = shuffle([...pool]).slice(0, Math.min(20, pool.length));
-  vQIdx=0; vScore=0; vSessWrong=[]; vAnswered=false;
-  vLastSetup = null; // 清掉 lastSetup，避免「再來一輪」用舊的 pool
-  // 記錄這次是弱點複習
   vWeakPool = pool;
   vWeakFilter = {type:filterType, minWrong};
+  vWeakDone = new Set(); // 重置已完成記錄
+  vSessionWords = shuffle([...pool]).slice(0, Math.min(20, pool.length));
+  vSessionWords.forEach(w=>vWeakDone.add(w.id)); // 記錄第一批
+  vQIdx=0; vScore=0; vSessWrong=[]; vAnswered=false;
+  vLastSetup = null;
   vShowScreen('v-s-quiz');
   vUpdateHintSmBtn();
   vRenderQ();
@@ -2276,34 +2300,40 @@ function wStartMCQ(filterType, minWrong){
   if(!pool.length){ alert('沒有符合條件的題目！'); return; }
 
   switchMode('mcq');
-  mSessionQs = shuffle([...pool]);
-  mQIdx=0; mScore=0; mSessWrong=[]; mAnswered=false;
   mWeakPool = pool;
   mWeakFilter = {type:filterType, minWrong};
+  mWeakDone = new Set();
+  mSessionQs = shuffle([...pool]);
+  mSessionQs.forEach(q=>mWeakDone.add(q.id));
+  mQIdx=0; mScore=0; mSessWrong=[]; mAnswered=false;
   mShowScreen('m-s-quiz');
   mRenderQ();
 }
 
 // 弱點池變數
-let vWeakPool=[], vWeakFilter=null, mWeakPool=[], mWeakFilter=null;
+let vWeakPool=[], vWeakFilter=null, vWeakDone=new Set();
+let mWeakPool=[], mWeakFilter=null, mWeakDone=new Set();
 
 
 function vRetakeWeak(){
   if(!vWeakPool.length) return;
-  // 取下一批（尚未在本輪練到的）
-  const done = new Set(vSessionWords.map(w=>w.id));
-  const remaining = vWeakPool.filter(w=>!done.has(w.id));
-  const nextBatch = remaining.length > 0 ? remaining : vWeakPool;
-  vSessionWords = shuffle([...nextBatch]).slice(0,20);
+  const remaining = vWeakPool.filter(w=>!vWeakDone.has(w.id));
+  // 若全部做完，重置從頭再來
+  const nextPool = remaining.length > 0 ? remaining : vWeakPool;
+  if(remaining.length === 0) vWeakDone = new Set();
+  vSessionWords = shuffle([...nextPool]).slice(0,20);
+  // 把這批加入已完成
+  vSessionWords.forEach(w=>vWeakDone.add(w.id));
   vQIdx=0; vScore=0; vSessWrong=[]; vAnswered=false;
   vShowScreen('v-s-quiz'); vUpdateHintSmBtn(); vRenderQ();
 }
 function mRetakeWeak(){
   if(!mWeakPool.length) return;
-  const done = new Set(mSessionQs.map(q=>q.id));
-  const remaining = mWeakPool.filter(q=>!done.has(q.id));
-  const nextBatch = remaining.length > 0 ? remaining : mWeakPool;
-  mSessionQs = shuffle([...nextBatch]);
+  const remaining = mWeakPool.filter(q=>!mWeakDone.has(q.id));
+  const nextPool = remaining.length > 0 ? remaining : mWeakPool;
+  if(remaining.length === 0) mWeakDone = new Set();
+  mSessionQs = shuffle([...nextPool]);
+  mSessionQs.forEach(q=>mWeakDone.add(q.id));
   mQIdx=0; mScore=0; mSessWrong=[]; mAnswered=false;
   mShowScreen('m-s-quiz'); mRenderQ();
 }
